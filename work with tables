@@ -1,0 +1,399 @@
+(function (d, $, S) {
+	'use strict';
+
+	function setRowNumbers(table) {
+		let number = 1;
+		table.querySelectorAll('.js__row-number')
+			.forEach((cell) => {
+				cell.innerText = number++;
+			});
+	}
+	function counting(input, output) {
+		input = Array.from(input);
+		let result = input.map((el) => {
+			return Number(el.innerHTML) || Number(el.value);
+		});
+		let reduce = result.reduce((a, b) => {
+			return a + b;
+		}, 0);
+		output.value = reduce.toFixed(2);
+		output.innerHTML = reduce.toFixed(2);
+		if (output.value === '0.00') {
+			output.innerHTML = '';
+		}
+	}
+
+	function updateTableCells(container) {
+		const tableType = container.dataset.type;
+		let subTotalCells;
+		let totalCell;
+		switch (tableType) {
+			case 'outlay':
+				subTotalCells = container.querySelectorAll('.total');
+				totalCell = container.querySelector('.totalSumm');
+				counting(subTotalCells, totalCell);
+					const inputBudget = d.getElementById('proposal')
+						.querySelector('.js__input[name="budget"]');
+					if (inputBudget) {
+						inputBudget.value = totalCell.value;
+					}
+			break;
+
+			case 'financing_other':
+				subTotalCells = container.querySelectorAll('.total');
+				totalCell = container.querySelector('.totalSumm');
+				counting(subTotalCells, totalCell);
+			break;
+
+			case 'financing_report':
+				let third_columnInput = container.querySelectorAll('.third_columnInput');
+				let third_column = container.querySelector('.third_column');
+				counting(third_columnInput, third_column);
+
+				let fourth_columnInput = container.querySelectorAll('.fourth_columnInput');
+				let fourth_column = container.querySelector('.fourth_column');
+				counting(fourth_columnInput, fourth_column);
+
+				let fifth_columnInput = container.querySelectorAll('.fifth_columnInput');
+				let fifth_column = container.querySelector('.fifth_column');
+				counting(fifth_columnInput, fifth_column);
+
+				let sixth_columnInput = container.querySelectorAll('.sixth_columnInput');
+				let sixth_column = container.querySelector('.sixth_column');
+				counting(sixth_columnInput, sixth_column);
+			break;
+
+			case 'jobs_report':
+				let inputColumn_three = container.querySelectorAll('.inputColumn_three');
+				let column_three  = container.querySelector('.column_three');
+				counting(inputColumn_three, column_three);
+
+				let inputColumn_four = container.querySelectorAll('.inputColumn_four');
+				let column_four = container.querySelector('.column_four');
+				counting(inputColumn_four, column_four);
+
+				let inputColumn_six = container.querySelectorAll('.inputColumn_six');
+				let column_six = container.querySelector('.column_six');
+				counting(inputColumn_six, column_six);
+			break;
+
+			default:
+				console.log('какое-то действие');
+			break;
+		}
+	}
+
+	function onChangeInput(event) {
+		const input = event.target;
+		const container = input.closest('.js__proposal-table');
+		updateTableCells(container);
+	}
+
+	function onRemoveRow(event) {
+		S.ignoreEvent(event);
+
+		const row = event.target.closest('.containerTd');
+		const table = row.closest('.js__proposal-table');
+		row.remove();
+		updateTableCells(table);
+		console.log(table);
+		setRowNumbers(table);
+	}
+
+	const TableOutlay = function() {
+		let table;
+
+		function init() {
+			table = d.getElementById('tableOutlay');
+			if (!table) {
+				return;
+			}
+
+			S.addListenerByParents(table, 'addRowButton', 'click', onAddRow);
+			S.addListenerByParents(table, 'js__remove-row', 'click', onRemoveRow);
+			S.addListenerByParents(table, 'metaTable_input', 'input', onChangeInput);
+			S.addListenerByParents(d.getElementById('tableOutlay'), 'input', 'input', sumAddition);
+		}
+
+		function onAddRow(event) {
+			S.ignoreEvent(event);
+
+			const line = d.querySelector('.line');
+			const containerTd = d.createElement('tr');
+			containerTd.setAttribute('class', 'containerTd');
+			let button_remove = '<td class="cell__for__button hide_borders"><button class="js__remove-row"></button></td>';
+			let input = `
+			<td class="financing_input"><input type="text" class="input metaTable_input sendInput" name="name"/></td>
+			<td class="financing_input"><input type="number" class="input  metaTable_input sendInput" name="quantity"/></td>
+			<td class="financing_input"><input type="number" class="input  metaTable_input sendInput" name="price"/></td>
+			<td class="financing_input"><input type="text" readonly="readonly" class="totalOutlay total input  metaTable_input sendInput" name="amount" data-total="outlay"/></td>
+			`;
+			containerTd.innerHTML += input + button_remove;
+			line.before(containerTd);
+
+		}
+
+		function sumAddition(evt) {
+			S.ignoreEvent(evt);
+			const target = evt.target;
+			const tr = target.closest('.containerTd');
+
+			const outlayInput = tr.querySelectorAll('input');
+			outlayInput[3].value = (
+				outlayInput[1].value * outlayInput[2].value
+			).toFixed(2);
+			updateTableCells(d.querySelector('.js__blockOutlay'));
+
+		}
+
+		return { init: init };
+	}();
+
+	const TableFinanc = function() {
+
+		let table;
+		function init() {
+			table = d.getElementById('table_finance');
+
+			if (!table) {
+				return;
+			}
+			const co_financing = d.getElementById('co_financing'),
+				co_percent = d.getElementById('co_percent'),
+				all__financing = d.getElementById('all__financing'),
+				all__percent = d.getElementById('all__percent');
+
+			let all__finance = d.querySelectorAll('.input__finance');
+			let projectAmount_percent = d.querySelectorAll('.projectAmount_percent');
+			let input__finance = d.querySelectorAll('.input__finance');
+			all__finance = Array.from(all__finance);
+			all__finance.map(function (ele) {
+				ele.oninput = function action() {
+					let result = all__finance.map(function (x) {
+						return Number(x.value);
+					});
+					let reduce = result.reduce(function (a, b) {
+						return a + b;
+					});
+					co_financing.innerHTML = (reduce - input__finance[0].value).toFixed(2);
+					if (co_financing.textContent === '0.00') {
+						co_financing.textContent = '';
+					}
+					all__percent.innerHTML = reduce !== 0 ? '100' : '';
+					all__financing.innerHTML = reduce.toFixed(2) !== '0.00' ? reduce.toFixed(2) : '';
+					percents();
+
+					function percents() {
+						let percent;
+
+						for (let i = 0; i < input__finance.length; i++) {
+							projectAmount_percent[i].value = ((input__finance[i].value * 100) / reduce).toFixed(2);
+
+							percent = (all__percent.textContent - projectAmount_percent[0].value).toFixed(2);
+							if (percent === 'NaN') {
+								percent = '';
+							}
+							if (projectAmount_percent[i].value === 'NaN') {
+								projectAmount_percent[i].value = '';
+							}
+						}
+						co_percent.innerHTML = percent;
+
+						if (co_percent.textContent === '0.00') {
+							co_percent.textContent = '';
+						}
+						if (projectAmount_percent[0].value === 'NaN') {
+							projectAmount_percent[0].value = '';
+						}
+
+						const inputRate = d.getElementById('proposal')
+						.querySelector('.js__input[name="co-fin_total_rate"]');
+						if (inputRate) {
+							inputRate.value = d.getElementById('co_percent').innerText;
+						}
+					}
+				};
+			});
+		}
+		return { init: init };
+	}();
+
+	const TableFinancing_other = function() {
+		let table;
+
+		function init() {
+			table = d.getElementById('financingOther');
+
+			if (!table) {
+				return;
+			}
+
+			S.addListenerByParents(table, 'addRowButton', 'click', onAddRow);
+			S.addListenerByParents(table, 'js__remove-row', 'click', onRemoveRow);
+			S.addListenerByParents(table, 'input', 'input', onChangeInput);
+			S.addListenerByParents(d.getElementById('financingOther'), 'total', 'input', sumAddition);
+
+		}
+
+		function onAddRow(event) {
+			S.ignoreEvent(event);
+			const line = d.getElementById('financing_other_line');
+			let tr = d.createElement('tr');
+			tr.setAttribute('class', 'containerTd');
+			let button__close = '<td class="cell__for__button hide_borders"> <button class="js__remove-row"></button></td>';
+			let input = `
+			<td class="financing_input"><input type="text" name="name" class="metaTable_input sendInput"/></td>
+			<td class="financing_input"><input type="number" name="amount" class="metaTable_input input totalFinancing_other total sendInput" data-total="financing_other"/></td>`;
+			tr.innerHTML += input + button__close;
+			line.before(tr);
+
+		}
+		function sumAddition(evt) {
+			S.ignoreEvent(evt);
+			updateTableCells(d.querySelector('.blockFinancing_other'));
+
+		}
+
+		return { init: init };
+	}();
+
+	const TableFinancing_report = function() {
+		let table;
+
+		function init() {
+			table = d.getElementById('financing_report');
+
+			if (!table) {
+				return;
+			}
+
+			S.addListenerByParents(table, 'js__remove-row', 'click', onRemoveRow);
+			S.addListenerByParents(table, 'input', 'input', onChangeInput);
+			S.addListenerByParents(table, 'addRowButton', 'click', onAddRow);
+			S.addListenerByParents(d.getElementById('financing_report'), 'input', 'input', sumAddition);
+			setRowNumbers(table);
+		}
+
+		function sumAddition(evt) {
+			S.ignoreEvent(evt);
+			// totalAmount(d.querySelector('.blockFinancing_report'));
+		}
+
+		function onAddRow(evt) {
+			S.ignoreEvent(evt);
+			const line = d.getElementById('third_line');
+			let tr = d.createElement('tr');
+			tr.setAttribute('class', 'containerTd');
+			let button__close = '<td class="cell__for__button hide_borders"><button class="js__remove-row"></button></td>';
+			let input = `
+			<td><p class="js__row-number"></p></td>
+			<td><input type="text" name="valueOne" class="metaTable_input input sendInput"/></td>
+			<td><input type="text" name="valueTwo" class="metaTable_input input sendInput"/></td>
+			<td><input type="number" name="valueThree" class="metaTable_input input total third_columnInput sendInput"/></td>
+			<td><input type="number" name="valueFour" class="metaTable_input input total fourth_columnInput sendInput"/></td>
+			<td><input type="number" name="valueFive" class="metaTable_input input total fifth_columnInput sendInput"/></td>
+			<td><input type="text" name="valueSix" class="metaTable_input input sendInput"/></td>
+			<td><input type="number" name="valueSeven" class="metaTable_input input total sixth_columnInput sendInput"/></td>
+			<td><input type="text" name="valueEight" class="metaTable_input input sendInput"/></td>
+			`;
+			tr.innerHTML += input + button__close;
+			line.before(tr);
+			setRowNumbers(table);
+		};
+
+		return { init: init };
+	}();
+
+	const TableJobs_report = function() {
+		let table;
+
+		function init() {
+			table = d.getElementById('jobs_report');
+
+			if (!table) {
+				return;
+			}
+
+			S.addListenerByParents(table, 'js__remove-row', 'click', onRemoveRow);
+			S.addListenerByParents(table, 'input', 'input', onChangeInput);
+			S.addListenerByParents(d.getElementById('jobs_report'), 'input', 'input', sumAddition);
+			S.addListenerByParents(table, 'addRowButton', 'click', onAddRow);
+			setRowNumbers(table);
+		}
+
+		function sumAddition(evt) {
+			S.ignoreEvent(evt);
+			// totalAmount(d.querySelector('.blockJobs_report'));
+		}
+
+		function onAddRow(evt) {
+			S.ignoreEvent(evt);
+			const line = d.getElementById('fourth_line');
+			let tr = d.createElement('tr');
+			tr.setAttribute('class', 'containerTd');
+			let button__close = '<td class="cell__for__button hide_borders"><button class="js__remove-row"></button></td>';
+
+			let input = `
+			<td><p class="js__row-number"></p></td>
+			<td><input type="text" name="valueOne" class="metaTable_input input sendInput"/></td>
+			<td><input type="text" name="valueTwo" class="metaTable_input input sendInput"/></td>
+			<td><input type="number" name="valueThree" class="total input metaTable_input inputColumn_three sendInput"/></td>
+			<td><input type="number" name="valueFour" class="total input metaTable_input inputColumn_four sendInput"/></td>
+			<td><input type="text" name="valueFive" class="metaTable_input input sendInput"/></td>
+			<td><input type="number" name="valueSix" class="total metaTable_input input inputColumn_six sendInput" /></td>
+			<td><input type="text" name="valueSeven" class="metaTable_input input sendInput"/></td>
+			`;
+			tr.innerHTML += input + button__close;
+			line.before(tr);
+			setRowNumbers(table);
+		};
+
+		return { init: init };
+	}();
+
+	S.getProposalTableData = (tableType) => {
+		const allArray = [];
+
+		[].every.call(
+			d.getElementsByClassName('js__proposal-table'),
+			(table) => {
+				if (table.dataset.type === tableType){
+					collectDataTable(table);
+					return false;
+				} else {
+					return true;
+				}
+			});
+
+		function collectDataTable(element) {
+			const inputs = element.querySelectorAll('.sendInput');
+			const total = element.querySelectorAll('.sendTotalSumm');
+			const valueObject = {};
+			const totalObject = {};
+
+			total.forEach((send) => {
+				totalObject[send.id] = send.innerText;
+			});
+			allArray.push(totalObject);
+
+			inputs.forEach((input) => {
+				valueObject[input.name] = input.value;
+				if (input.name === inputs[inputs.length -1].name) {
+					const copy = Object.assign({}, valueObject);
+					allArray.push(copy);
+				}
+			});
+		}
+
+		return allArray;
+	}
+
+	d.addEventListener('DOMContentLoaded', () => {
+		TableOutlay.init();
+		TableFinanc.init();
+		TableFinancing_other.init();
+		TableFinancing_report.init();
+		TableJobs_report.init();
+	});
+
+})(document, jQuery, Sensei);
